@@ -20,13 +20,42 @@
       "Read(**/.env.*.local)",
       "Read(**/.env.production)",
       "Read(**/.env.development)",
+      "Read(**/.env.test)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.dev)",
       "Edit(**/.env)",
       "Edit(**/.env.local)",
       "Edit(**/.env.*.local)",
       "Edit(**/.env.production)",
       "Edit(**/.env.development)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.prod)",
+      "Edit(**/.env.dev)",
+      "Bash(git push)",
       "Bash(git push *)",
-      "PowerShell(git push *)"
+      "Bash(git * push)",
+      "Bash(git * push *)",
+      "PowerShell(git push)",
+      "PowerShell(git push *)",
+      "PowerShell(git * push)",
+      "PowerShell(git * push *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|MultiEdit|Write|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.mjs\"",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
     ]
   }
 }

@@ -8,7 +8,7 @@ Producto: [docs/PRD.md](docs/PRD.md) · Decisiones: [docs/decisiones/](docs/deci
 ## Stack
 - **Frontend:** React + Vite (`client/`)
 - **Backend:** Node 22, Express, ESM (`"type": "module"`) (`server/`)
-- **Datos:** MongoDB Atlas con Mongoose
+- **Datos:** MongoDB con Mongoose: local (`localhost:27017`) en desarrollo; Atlas como opción para producción
 - **IA:** Anthropic Claude (SDK oficial)
 - **Tiempo real:** Socket.IO
 - **Validación:** zod
@@ -71,4 +71,4 @@ npm run lint              lint de todo el repo
 - Antes de implementar algo no trivial, revisar el PRD y los ADRs relevantes.
 - Las decisiones de arquitectura nuevas van en un ADR nuevo en `docs/decisiones/`.
 - Commits pequeños con mensajes en español en modo imperativo. Nunca hacer `git push` (está
-  bloqueado en `.claude/settings.json`).
+  bloqueado en `.claude/settings.json` y en el hook `.claude/hooks/guard.mjs`).

@@ -55,3 +55,15 @@ Prioridad: **P0** bloquea el inicio del desarrollo · **P1** se necesita antes d
 | 31 | Elegir Render o Railway, y el plan de MongoDB Atlas (el tier M0 tiene límites) | P1 | Dev |
 | 32 | Dominio y subdominio para el CRM y para el webhook | P1 | Cliente + Dev |
 | 33 | Política de respaldo de la base de datos | P2 | Dev |
+
+## Implementación (estado al 2026-10-23)
+
+El repositorio solo contiene documentación y configuración. El commit inicial `3b51438` se llama "feat: esqueleto MERN y simulador", pero **no incluye código**.
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 34 | **Esqueleto MERN**: `package.json` raíz con npm workspaces, `server/` (Express + Socket.IO en el puerto 3001, carga de env con zod, error handler central) y `client/` (React + Vite en el 5173 con proxy de `/api` y del WebSocket). Debe funcionar `npm run dev` | P0 | Dev |
+| 35 | **Simulador de WhatsApp** (ADR-001): UI en `/simulador`, canal `simulator` y salida exclusivamente por `server/src/outbox/gate.js` | P0 | Dev |
+| 36 | **Persistencia en MongoDB local** (S36): modelos Mongoose de Lead/Contacto, Conversación y Mensaje; guardar los mensajes entrantes y salientes de cada conversación | P0 | Dev |
+| 37 | Scripts `test` y `lint` de la raíz (los comandos de `CLAUDE.md` aún no existen). Incluir las pruebas del hook `.claude/hooks/guard.test.mjs` | P1 | Dev |
+| 38 | Evaluar habilitar el sandbox de Claude Code en este equipo (Windows) para bloquear la lectura de `.env` a nivel de sistema operativo y cerrar los huecos que el hook no cubre (S37) | P2 | Dev |
