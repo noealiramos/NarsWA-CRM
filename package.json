@@ -1,0 +1,22 @@
+{
+  "name": "fuerza-gym-crm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CRM de Fuerza Gym con agentes de IA que atienden leads por WhatsApp",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names server,client --prefix-colors blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "test": "npm test -w server && node --test .claude/hooks/guard.test.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}
