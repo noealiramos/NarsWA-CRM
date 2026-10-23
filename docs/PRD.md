@@ -6,7 +6,7 @@
 | Cliente | Fuerza Gym, Aguascalientes (1 sucursal) |
 | Versión | 0.1 (borrador para validación) |
 | Fecha | 2026-10-16 |
-| Documentos relacionados | [PENDIENTES.md](PENDIENTES.md), [SUPUESTOS.md](SUPUESTOS.md) |
+| Documentos relacionados | [PENDIENTES.md](PENDIENTES.md), [SUPUESTOS.md](SUPUESTOS.md), [negocio/](negocio/) (catálogo, horarios, FAQ y playbook; datos simulados con `[CONFIRMAR]`, S44) |
 
 ---
 
@@ -46,7 +46,7 @@ Fuerza Gym recibe leads por WhatsApp (orgánicos y de anuncios Click-to-WhatsApp
 
 La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al especialista. Todos comparten la persona y los límites.
 
-**Persona común:** tono cercano y motivador, tuteo, emojis moderados, español de México. Se presenta como parte del equipo de Fuerza Gym (nombre de la persona: ver PENDIENTES).
+**Persona común:** tono cercano y motivador, tuteo, emojis moderados, español de México. Se presenta como **Sofía, asistente virtual de Fuerza Gym**, desde el primer mensaje, y nunca afirma ser una persona. Si le preguntan si es una IA, responde con transparencia. Ver [playbook-ventas.md](negocio/playbook-ventas.md).
 
 | Agente | Responsabilidad | Herramientas / acciones |
 |---|---|---|
@@ -71,6 +71,10 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 | `FUERA_DE_CONOCIMIENTO` | Pregunta que la base de conocimiento no cubre | Sí |
 | `SOLICITUD_HUMANO` | El lead pide hablar con una persona | Sí |
 | `QUEJA_NEGOCIACION` | Molestia o queja, sentimiento negativo, o petición de descuento | Sí |
+| `TRAMITE_RECEPCION` *(documental, pendiente de implementar: S48, PENDIENTES #47)* | Solicitud que requiere una acción de recepción: visita, reservación de clase, datos SPEI, dirección exacta, congelamiento, vencimiento, QR, renovación o cita de un servicio con costo | No (sigue atendiendo otras dudas y no afirma que el trámite esté hecho) |
+| `EMERGENCIA` *(documental, pendiente de implementar; prioridad máxima)* | Posible emergencia médica | Sí, **después** de indicar al lead que busque ayuda inmediata y llame al 911 |
+
+La clasificación detallada de cada situación está en [playbook-ventas.md §6](negocio/playbook-ventas.md). Al 2026-10-23 **ningún** tipo de escalamiento está implementado.
 
 ---
 
@@ -82,6 +86,8 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 3. El agente de ventas explica los planes y pregunta el horario preferido para entrenar.
 4. El lead acepta una visita o clase de prueba. El agente consulta la disponibilidad en Google Calendar, propone horarios y crea el evento.
 5. El lead pasa a la etapa **Visita agendada**. El sistema envía un recordatorio antes de la visita.
+
+> **Operación provisional (MVP, Fase 4):** mientras no existan la integración con Google Calendar (PENDIENTES #14), la dirección validada (#4) y las reglas de agenda (#15), el agente **registra** el día y la hora preferidos y crea un escalamiento `TRAMITE_RECEPCION`. Recepción confirma la visita y mueve el lead a `Visita agendada`. El flujo automático descrito arriba se habilita cuando se cumplan esas tres condiciones (#51). Las reservaciones de clases grupales siguen el mismo criterio y solo se automatizarán con control de cupos (S46).
 
 ### F2. Venta → pago → confirmación humana → socio
 1. El lead elige un plan. El agente de pagos comparte las opciones: datos SPEI, link de pago del plan, o pago en sucursal.
@@ -100,6 +106,8 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 
 ### F4. Seguimiento dentro de la ventana de 24 h
 - Si el lead deja de responder, el agente hace hasta 2 seguimientos **solo dentro de la ventana de 24 h** desde el último mensaje del lead. No se envían seguimientos comerciales con plantilla fuera de la ventana.
+- No se envían seguimientos entre las 9:00 p. m. y las 8:00 a. m. (`America/Mexico_City`). Un seguimiento que caiga en ese rango se recorre a las 8:00 a. m. si sigue dentro de la ventana de 24 h; si no, se cancela.
+- Si el lead pide no ser contactado, se registra una **exclusión comercial** y no se envían más seguimientos, aunque vuelva a escribir, hasta que haya una autorización expresa. Tiempos y textos en [playbook-ventas.md §5](negocio/playbook-ventas.md).
 
 ### F5. Renovación
 - Antes del vencimiento de la membresía, el sistema envía un recordatorio de renovación (plantilla de WhatsApp de tipo utilidad). Si el socio responde, el agente de pagos retoma el flujo F2.
@@ -110,10 +118,10 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 
 | Entidad | Campos clave |
 |---|---|
-| **Lead / Contacto** | nombre, teléfono (WhatsApp, E.164), horario preferido (mañana/tarde/noche), origen (orgánico / anuncio + datos del referral), etapa del pipeline, etiquetas, fecha de creación, último mensaje del lead (para la ventana de 24 h) |
+| **Lead / Contacto** | nombre, teléfono (WhatsApp, E.164), horario preferido (mañana/tarde/noche), origen (orgánico / anuncio + datos del referral), etapa del pipeline, etiquetas, fecha de creación, último mensaje del lead (para la ventana de 24 h), exclusión comercial (fecha y motivo) |
 | **Conversación** | lead, modo (`IA` / `HUMANO`), agente activo, usuario asignado, estado |
 | **Mensaje** | conversación, dirección (entrante/saliente), autor (lead / agente X / usuario Y / sistema), tipo (texto/imagen/audio/PDF/plantilla), contenido, transcripción (si es audio), media almacenada, estado de entrega de WhatsApp, timestamp |
-| **Escalamiento** | tipo, conversación, motivo o resumen generado por la IA, adjuntos, estado (`ABIERTO` / `EN_PROCESO` / `RESUELTO`), quién lo resolvió, timestamps (para medir tiempos) |
+| **Escalamiento** | tipo, prioridad, conversación, motivo o resumen generado por la IA, adjuntos, estado (`ABIERTO` / `EN_PROCESO` / `RESUELTO`), quién lo resolvió, timestamps (para medir tiempos) |
 | **Pago** | lead, plan, monto, método (SPEI / link / efectivo / tarjeta), comprobante, estado (`EN_REVISIÓN` / `CONFIRMADO` / `RECHAZADO`), motivo de rechazo, revisado por, timestamps |
 | **Membresía** | socio, plan, fecha de inicio, fecha de vencimiento, estado |
 | **Plan** | nombre, precio, duración, descripción, link de pago, activo |
@@ -195,6 +203,7 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 - El lead recibe una confirmación con la fecha, la hora y la dirección.
 - El lead recibe un recordatorio antes de la visita.
 - Si el lead pide reagendar o cancelar, el agente actualiza el evento y la Cita.
+- **Operación provisional (MVP):** hasta que se cumplan las condiciones de F1 (Calendar, dirección y reglas de agenda), el agente no propone horarios ni confirma: registra la preferencia, escala `TRAMITE_RECEPCION` y recepción confirma. Los criterios de arriba siguen siendo el objetivo.
 
 **A5. Entender notas de voz**
 *Como lead, quiero mandar audios y que me entiendan.*
@@ -212,6 +221,7 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 - Se envían como máximo 2 seguimientos por silencio, y solo si siguen dentro de la ventana de 24 h desde el último mensaje del lead.
 - No se envían seguimientos si la conversación está en modo `HUMANO`, si el lead es `Socio` o si es `Perdido`.
 - Si el lead responde, se cancelan los seguimientos pendientes.
+- Se respetan el horario silencioso y la exclusión comercial descritos en F4.
 
 ### Épica B — Pagos con validación humana (HITL)
 
@@ -293,6 +303,7 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 - Hay vista de lista y kanban por etapa, con filtros por origen, etapa, fecha y horario preferido.
 - La ficha del lead muestra los datos, el historial de mensajes, las citas, los pagos y los escalamientos.
 - Recepción y Admin pueden mover etapas manualmente (por ejemplo, `Visitó`, `No asistió` o `Perdido`).
+- Las etapas no son estrictamente secuenciales: un lead puede pasar a `Socio` desde cualquier etapa cuando recepción registra un pago (B4). `Perdido` es manual en el MVP.
 
 **E2. Dashboard de métricas**
 *Como dueño, quiero ver el desempeño del embudo y de la atención.*
@@ -308,7 +319,8 @@ Las metas son iniciales. Se ajustarán con la línea base de las primeras 4 sema
 |---|---|---|
 | **Tiempo de primera respuesta** | Desde el primer mensaje del lead hasta la primera respuesta del agente | p95 < 60 s, 24/7 |
 | **Tiempo de confirmación de pago** | Desde que se recibe el comprobante hasta que un humano lo confirma o rechaza, **en horario de atención** | Mediana < 30 min |
-| **% resueltas sin humano** | Conversaciones del periodo sin escalamientos distintos de `PAGO` ÷ total de conversaciones | ≥ 70 % |
+| **% resolución informativa autónoma** | Conversaciones del periodo **sin** escalamientos `FUERA_DE_CONOCIMIENTO`, `SOLICITUD_HUMANO`, `QUEJA_NEGOCIACION` ni `EMERGENCIA` ÷ total de conversaciones del periodo | ≥ 70 % |
+| **% intervenciones humanas** | Conversaciones con al menos un escalamiento **de cualquier tipo** (incluye `PAGO` y `TRAMITE_RECEPCION`) ÷ total de conversaciones, desglosado por tipo. El dashboard muestra numerador y denominador de ambas métricas; ningún caso escalado se excluye del total | Solo monitoreo |
 | **% lead → visita agendada** | Leads con al menos una cita ÷ leads nuevos del periodo | ≥ 30 % |
 | **% lead → socio pagado** | Leads con pago confirmado ÷ leads nuevos del periodo | ≥ 10 % |
 | *Secundarias* | Asistencia a visitas (`Visitó` ÷ `Visita agendada`), tasa de renovación, tasa de rechazo de comprobantes, volumen de escalamientos por tipo y número de respuestas del agente marcadas como incorrectas | Solo monitoreo |

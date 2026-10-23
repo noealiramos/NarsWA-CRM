@@ -68,8 +68,51 @@ El repositorio solo contiene documentación y configuración. El commit inicial 
 | 37 | Scripts `test` y `lint` de la raíz (los comandos de `CLAUDE.md` aún no existen). Incluir las pruebas del hook `.claude/hooks/guard.test.mjs` | P1 | Dev |
 | 38 | Evaluar habilitar el sandbox de Claude Code en este equipo (Windows) para bloquear la lectura de `.env` a nivel de sistema operativo y cerrar los huecos que el hook no cubre (S37) | P2 | Dev |
 | 39 | El simulador y el parser del webhook solo manejan **mensajes de texto**. Faltan imágenes, PDF y notas de voz (PRD A5 y B2), estados de entrega, `referral` de Click-to-WhatsApp desde la UI y manipulación del reloj para probar la ventana de 24 h (ADR-001) | P1 | Dev |
-| 40 | **Respondedor provisional** (`server/src/agents/provisionalResponder.js`): responde un texto fijo sin datos comerciales. Sustituirlo por los agentes de IA del PRD §3 (router, info, ventas y pagos), con base de conocimiento y pruebas de los límites duros | P0 | Dev |
+| 40 | **Respondedor provisional** (`server/src/agents/provisionalResponder.js`): responde un texto fijo sin datos comerciales. Sustituirlo por los agentes de IA del PRD §3 (router, info, ventas y pagos), con base de conocimiento y pruebas de los límites duros. La base de conocimiento inicial sale de `docs/negocio/` (S45), y las pruebas de límites duros deben cubrir [playbook-ventas.md §8](negocio/playbook-ventas.md) | P0 | Dev |
 | 41 | La vista CRM y la API (`/api/contacts`) **no tienen autenticación ni roles** (PRD D2 y §9). Tampoco se pueden tomar o devolver conversaciones (modo HUMANO) desde la interfaz (PRD C2) | P0 | Dev |
 | 42 | Plantillas de WhatsApp fuera de la ventana de 24 h: hoy el gate **bloquea** todo envío fuera de la ventana (relacionado con #13) | P1 | Dev |
 
 **Avance (Fase 3, 2026-10-23):** #34, #35 y #36 quedaron implementados y probados (esqueleto MERN, simulador por `outbox/gate.js` y persistencia en `fuerza-gym-crm`). De #37 ya existe `npm test`; `lint` sigue pendiente por decisión del usuario.
+
+## Negocio y requisitos derivados (Fase 4, 2026-10-23)
+
+Resultado de la entrevista de negocio ([`docs/negocio/`](negocio/)). Ninguno está implementado.
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 43 | **Validar con negocio y retirar `[CONFIRMAR]`** de `docs/negocio/`. Hasta entonces, los datos son de simulación (S44) | P1 | Cliente |
+| 44 | Precio y programación de **talleres especiales**, y lista de precios de bebidas y accesorios | P2 | Cliente |
+| 45 | **Modelo Plan** (aún no existe): cuota de inscripción, exención por plan, regla de reinscripción (30 días), requisitos de elegibilidad (Estudiante), beneficios incluidos y excluidos (Pase diario sin clases), canal de venta (Pase diario solo en sucursal) | P1 | Dev |
+| 46 | **Modelo Membresía** (aún no existe): vigencia en días naturales con cortes a las 00:00 `America/Mexico_City`, renovación anticipada encadenada, congelamiento (Trimestral y Semestral, 7–15 días, 1 por periodo, no retroactivo) y **corrección de la fecha de activación** solo por recepción o Admin, con motivo y bitácora (S4) | P1 | Dev |
+| 47 | **Modelo Escalamiento** (aún no existe ningún tipo). Al implementarlo, incluir además de los 4 tipos del PRD **`TRAMITE_RECEPCION`** (sin pausa) y **`EMERGENCIA`** (prioridad máxima, notificación prioritaria, aviso del 911 antes de transferir), con un ADR (S48). Requisito de seguridad antes de poner agentes reales | P0 | Dev |
+| 48 | **Exclusión comercial** en Contacto (fecha, motivo y quién autoriza reanudar) y su aplicación en los seguimientos | P1 | Dev |
+| 49 | **Jobs de seguimiento** (`server/src/jobs/` aún no existe): 2 seguimientos (2 h y 20 h), **horario silencioso** de 21:00 a 08:00 y reprogramación o cancelación según la ventana de 24 h | P1 | Dev |
+| 50 | **Transiciones de etapa no lineales** con autorización por rol (`SOCIO` solo por pago confirmado; `PERDIDO` manual con motivo) | P1 | Dev |
+| 51 | Condiciones para pasar de la **operación provisional** (S46) al flujo automático de visitas (Calendar #14, dirección #4, reglas #15) y de reservaciones de clase (control de cupos, fuera del PRD actual) | P1 | Cliente + Dev |
+| 52 | **Horarios especiales con vigencia** (fecha de inicio, fin y horario) en la base de conocimiento, para festivos no listados y avisos de la Feria | P2 | Dev |
+| 53 | Redefinir las **métricas** de resolución en el dashboard según PRD §8 (resolución informativa autónoma e intervenciones humanas) | P2 | Dev |
+
+**Avance (Fase 4, 2026-10-23), entrevista de negocio:** quedaron **documentados** en `docs/negocio/` con `[CONFIRMAR]` (datos simulados, S44):
+- #1 catálogo de planes;
+- #2 sin promociones vigentes;
+- #3 horarios del gimnasio y de recepción;
+- #5 clases y calendario;
+- #6 reglamento y FAQ;
+- #9 borrador de bienvenida;
+- #10 nombre de la persona (Sofía, asistente virtual);
+- #20 concepto SPEI: nombre completo + referencia que da recepción;
+- #21 recordatorio único 5 días antes;
+- #23 seguimientos a las 2 h y 20 h;
+- #24 `Perdido` manual en el MVP (la regla automática por inactividad, por ejemplo 14 días, **sigue abierta**);
+- #25 inscripción de $199 y reinscripción;
+- #26 monto distinto → escalamiento `PAGO`, sin que la IA opine;
+- #27 visita gratuita, una por persona;
+- #28 temas sensibles (menores, cancelaciones, reembolsos, privacidad, acoso, emergencias).
+
+**Siguen abiertos:**
+- **#4** dirección y Maps (solo se comunica "zona norte de Aguascalientes");
+- **#7** datos SPEI;
+- **#8** aviso de privacidad. Mientras falte, el agente escala toda consulta de privacidad y no afirma que exista un aviso publicado. Debe estar aprobado antes de usar el sistema con personas reales;
+- **#11** link de pago: **no** en el MVP.
+
+Ningún dato cuenta como confirmado mientras conserve `[CONFIRMAR]` (#43).
