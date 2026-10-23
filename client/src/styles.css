@@ -33,3 +33,72 @@ button, input { font: inherit; }
 }
 .badge-ok { background: #e6f4ea; color: var(--ok); }
 .badge-error { background: var(--error-bg); color: var(--error); }
+
+nav { display: flex; gap: 4px; }
+nav a { padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+nav a.nav-active, nav a:hover { background: var(--bg); color: var(--text); }
+.muted { color: var(--muted); }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 18px; margin: 0; }
+
+.alert {
+  margin: 8px 0; padding: 8px 12px; border-radius: 8px;
+  background: var(--error-bg); color: var(--error); font-size: 14px;
+}
+.alert ul { margin: 4px 0 0; padding-left: 18px; }
+.hint-error { color: var(--error); font-size: 13px; margin: 0; }
+
+/* Simulador */
+.simulator { display: grid; gap: 16px; grid-template-columns: minmax(0, 280px) minmax(0, 420px); justify-content: center; }
+.sim-config { display: flex; flex-direction: column; gap: 12px; }
+.sim-config label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+input[aria-invalid='true'] { border-color: var(--error); }
+.phone {
+  display: flex; flex-direction: column; height: min(640px, calc(100vh - 120px));
+  background: #ece5dd; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+}
+.phone-header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #075e54; color: #fff; }
+.chat { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.chat-empty { color: var(--muted); text-align: center; margin: auto; }
+.bubble {
+  max-width: 80%; padding: 6px 10px; border-radius: 8px; display: flex; flex-direction: column;
+  gap: 2px; box-shadow: 0 1px 1px rgb(0 0 0 / 8%); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.bubble time, .bubble small { font-size: 11px; color: var(--muted); }
+.bubble time { align-self: flex-end; }
+.bubble-lead { align-self: flex-end; background: var(--bubble-out); }
+.bubble-gym { align-self: flex-start; background: var(--bubble-in); }
+.composer { display: flex; gap: 8px; padding: 8px; background: #f0f0f0; }
+.composer input { flex: 1; min-width: 0; }
+button {
+  padding: 8px 14px; border: 0; border-radius: 8px; background: var(--brand); color: #fff; cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* CRM */
+.crm { display: grid; gap: 16px; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
+.crm-list, .crm-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.crm-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.contact-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.contact {
+  width: 100%; text-align: left; background: transparent; color: var(--text);
+  display: flex; flex-direction: column; gap: 2px; border: 1px solid transparent;
+}
+.contact:hover, .contact-active { background: var(--bg); border-color: var(--border); }
+.contact-main { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.contact-sub { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.contact-preview { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #3538cd; white-space: nowrap; }
+.stage-NUEVO { background: #eff8ff; color: #175cd3; }
+.stage-EN_CONVERSACION { background: #fef6ee; color: #b93815; }
+.stage-SOCIO { background: #e6f4ea; color: var(--ok); }
+.stage-PERDIDO { background: var(--border); color: var(--muted); }
+.detail-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chat-crm { background: var(--bg); border-radius: 8px; margin-top: 8px; max-height: 60vh; }
+.bubble-in { align-self: flex-start; background: var(--bubble-in); }
+.bubble-out { align-self: flex-end; background: var(--bubble-out); }
+
+@media (max-width: 760px) {
+  .simulator, .crm { grid-template-columns: minmax(0, 1fr); }
+}

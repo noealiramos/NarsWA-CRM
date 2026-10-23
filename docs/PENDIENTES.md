@@ -67,3 +67,9 @@ El repositorio solo contiene documentación y configuración. El commit inicial 
 | 36 | **Persistencia en MongoDB local** (S36): modelos Mongoose de Lead/Contacto, Conversación y Mensaje; guardar los mensajes entrantes y salientes de cada conversación | P0 | Dev |
 | 37 | Scripts `test` y `lint` de la raíz (los comandos de `CLAUDE.md` aún no existen). Incluir las pruebas del hook `.claude/hooks/guard.test.mjs` | P1 | Dev |
 | 38 | Evaluar habilitar el sandbox de Claude Code en este equipo (Windows) para bloquear la lectura de `.env` a nivel de sistema operativo y cerrar los huecos que el hook no cubre (S37) | P2 | Dev |
+| 39 | El simulador y el parser del webhook solo manejan **mensajes de texto**. Faltan imágenes, PDF y notas de voz (PRD A5 y B2), estados de entrega, `referral` de Click-to-WhatsApp desde la UI y manipulación del reloj para probar la ventana de 24 h (ADR-001) | P1 | Dev |
+| 40 | **Respondedor provisional** (`server/src/agents/provisionalResponder.js`): responde un texto fijo sin datos comerciales. Sustituirlo por los agentes de IA del PRD §3 (router, info, ventas y pagos), con base de conocimiento y pruebas de los límites duros | P0 | Dev |
+| 41 | La vista CRM y la API (`/api/contacts`) **no tienen autenticación ni roles** (PRD D2 y §9). Tampoco se pueden tomar o devolver conversaciones (modo HUMANO) desde la interfaz (PRD C2) | P0 | Dev |
+| 42 | Plantillas de WhatsApp fuera de la ventana de 24 h: hoy el gate **bloquea** todo envío fuera de la ventana (relacionado con #13) | P1 | Dev |
+
+**Avance (Fase 3, 2026-10-23):** #34, #35 y #36 quedaron implementados y probados (esqueleto MERN, simulador por `outbox/gate.js` y persistencia en `fuerza-gym-crm`). De #37 ya existe `npm test`; `lint` sigue pendiente por decisión del usuario.
