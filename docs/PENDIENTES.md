@@ -119,3 +119,21 @@ Resultado de la entrevista de negocio ([`docs/negocio/`](negocio/)). Ninguno est
 - **#11** link de pago: **no** en el MVP.
 
 Ningún dato cuenta como confirmado mientras conserve `[CONFIRMAR]` (#43).
+
+## Revisión del seed (commit `0da2f39`, 2026-10-23)
+
+Hallazgos del subagente `revisor`. Prioridad: los IMPORTANTES quedan en **P1** y los MENORES en **P2**. El código de `scripts/seed.js` no se ha modificado; su mantenimiento lo coordina la sesión principal ([ADR-002](decisiones/ADR-002-seed-en-raiz.md)).
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 57 | **Etapas del seed sin registros de negocio** (`scripts/seed.js:73-104`): Ricardo está en `SOCIO` sin Pago `CONFIRMADO` ni Membresía, Fernanda en `PAGO_EN_REVISION` sin Pago ni escalamiento `PAGO`, y Daniela en `VISITA_AGENDADA` sin Cita. Son datos históricos ficticios para probar el pipeline: hasta que existan los modelos (#45, #46, #47), esas etapas son **solo visuales** y ningún servicio ni job debe darlas por buenas. Al implementarlos, el seed debe crear el Pago `CONFIRMADO` por un usuario y la Membresía de Ricardo, el Pago `EN_REVISION` y el escalamiento de Fernanda, y la Cita de Daniela, **sin cambiar las etapas** de los 10 contactos. Complementa #55 (motivo de `PERDIDO` y exclusión) | P1 | Dev |
+| 58 | Documentar en `CLAUDE.md` la carpeta `scripts/` en la estructura y `npm run seed` en los comandos, con referencia a ADR-002 | P1 | Dev |
+| 59 | Mensajes huérfanos (`scripts/seed.js:205-222`): si se borra un contacto del seed y se vuelve a correr, los mensajes con llave `seed-fase4:` siguen apuntando al contacto anterior y el reporte los cuenta como "ya existían". Reportarlo como conflicto o documentar en S50 que el reinicio exige borrar también esos mensajes | P2 | Dev |
+| 60 | `seed()` exportada solo valida el nombre de la base (`scripts/seed.js:145-152`, `:233-236`); la verificación de host local está solo en `main()`. Validar también el host de la conexión activa | P2 | Dev |
+| 61 | El loopback IPv6 `mongodb://[::1]:27017/...` se rechaza por error al quitar el puerto (`scripts/seed.js:148`). Corregir el parseo y agregar el caso a la prueba | P2 | Dev |
+| 62 | `scripts/seed.js:145` lee `process.env.NODE_ENV` fuera de `server/src/config/`. Usar `config.NODE_ENV` | P2 | Dev |
+| 63 | `scripts/seed.js:251`: `pathToFileURL(process.argv[1])` lanza TypeError si `argv[1]` es `undefined` (REPL, `node -e`). Protegerlo | P2 | Dev |
+| 64 | Fechas incoherentes (`scripts/seed.js:174-176`, `:197`): `updatedAt` de contacto y conversación es anterior a `lastInboundAt`/`lastMessageAt`. Usar la última fecha | P2 | Dev |
+| 65 | La salida del seed mezcla idiomas (`contacts: N creados`, `scripts/seed.js:240`). Usar etiquetas en español | P2 | Dev |
+| 66 | Cobertura de `server/test/seed.test.js`: faltan dos `seed()` simultáneos (camino del duplicado 11000), la edición manual de un mensaje o conversación, y la verificación de fechas (primer mensaje `2026-10-12T16:00:00.000Z`) | P2 | Dev |
+| 67 | Al implementar los jobs (#49), excluir los contactos con la etiqueta `seed-fase4` (Carlos, Mariana, Jorge y el del anuncio quedarían como candidatos a seguimiento) | P2 | Dev |
