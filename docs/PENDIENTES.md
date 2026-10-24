@@ -91,6 +91,9 @@ Resultado de la entrevista de negocio ([`docs/negocio/`](negocio/)). Ninguno est
 | 51 | Condiciones para pasar de la **operación provisional** (S46) al flujo automático de visitas (Calendar #14, dirección #4, reglas #15) y de reservaciones de clase (control de cupos, fuera del PRD actual) | P1 | Cliente + Dev |
 | 52 | **Horarios especiales con vigencia** (fecha de inicio, fin y horario) en la base de conocimiento, para festivos no listados y avisos de la Feria | P2 | Dev |
 | 53 | Redefinir las **métricas** de resolución en el dashboard según PRD §8 (resolución informativa autónoma e intervenciones humanas) | P2 | Dev |
+| 54 | `author.ref = 'recepcion'` en los mensajes del seed es un **marcador**: cuando exista el modelo de usuarios (PRD D2), los mensajes de personal deben guardar el id del usuario | P2 | Dev |
+| 55 | El seed no registra el **motivo de `PERDIDO`** (Paola: contrató otro gimnasio) ni la **exclusión** de Hugo porque Contacto no tiene esos campos (#48 y #50). Agregarlos al seed cuando existan | P2 | Dev |
+| 56 | `CLAUDE.md` documenta `npm run lint`, pero **no existe** el script ni la configuración de ESLint | P2 | Dev |
 
 **Avance (Fase 4, 2026-10-23), entrevista de negocio:** quedaron **documentados** en `docs/negocio/` con `[CONFIRMAR]` (datos simulados, S44):
 - #1 catálogo de planes;
