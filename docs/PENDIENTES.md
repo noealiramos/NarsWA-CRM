@@ -87,7 +87,7 @@ Resultado de la entrevista de negocio ([`docs/negocio/`](negocio/)). Ninguno est
 | 47 | **Modelo Escalamiento** (aún no existe ningún tipo). Al implementarlo, incluir además de los 4 tipos del PRD **`TRAMITE_RECEPCION`** (sin pausa) y **`EMERGENCIA`** (prioridad máxima, notificación prioritaria, aviso del 911 antes de transferir), con un ADR (S48). Requisito de seguridad antes de poner agentes reales | P0 | Dev |
 | 48 | **Exclusión comercial** en Contacto (fecha, motivo y quién autoriza reanudar) y su aplicación en los seguimientos | P1 | Dev |
 | 49 | **Jobs de seguimiento** (`server/src/jobs/` aún no existe): 2 seguimientos (2 h y 20 h), **horario silencioso** de 21:00 a 08:00 y reprogramación o cancelación según la ventana de 24 h | P1 | Dev |
-| 50 | **Transiciones de etapa no lineales** con autorización por rol (`SOCIO` solo por pago confirmado; `PERDIDO` manual con motivo) | P1 | Dev |
+| 50 | **Transiciones de etapa no lineales** con autorización por rol (`SOCIO` solo por pago confirmado; `PERDIDO` manual, con motivo obligatorio solo desde `PAGO_EN_REVISION` y opcional en los demás movimientos permitidos (nunca desde `SOCIO`); S55, ADR-003) | P1 | Dev |
 | 51 | Condiciones para pasar de la **operación provisional** (S46) al flujo automático de visitas (Calendar #14, dirección #4, reglas #15) y de reservaciones de clase (control de cupos, fuera del PRD actual) | P1 | Cliente + Dev |
 | 52 | **Horarios especiales con vigencia** (fecha de inicio, fin y horario) en la base de conocimiento, para festivos no listados y avisos de la Feria | P2 | Dev |
 | 53 | Redefinir las **métricas** de resolución en el dashboard según PRD §8 (resolución informativa autónoma e intervenciones humanas) | P2 | Dev |
@@ -163,7 +163,30 @@ Hallazgos del subagente `revisor` sobre `.claude/agents/`, `CLAUDE.md` y los per
 | 77 | S53 (`SUPUESTOS.md:91`) dice "con o sin `-w server\|client`", pero falta `npm run test -w client` en `allow`. Agregar la regla o ajustar el texto (relacionado con #73) | P2 | Dev |
 | 78 | `guard.mjs:178-191` falla abierto: una entrada JSON válida que no es objeto (`null`) lanza TypeError y sale con código 1, que no bloquea. Envolver `main()` en `try/catch` que bloquee, validar que `input` sea objeto y agregar una prueba con `null`. Confirmar si Claude Code reconoce `"onFailure": "block"` | P2 | Dev |
 | 79 | `guard.mjs:44` y `:62`: comillas y escapes evaden `GIT_PUSH` y `GIT_MUTATING` en la sesión principal, backend y frontend (`git pu''sh`, `git "pu"sh`, ``git pu`sh``, `cmd /c git pu^sh`). Quitar `'`, `"`, `` ` ``, `\` y `^` en una copia del comando antes de evaluar, con pruebas (relacionado con S37). La misma normalización debe aplicarse a `SEED_RUN` y `NPM_MUTATING`, que también se evaden con comillas (`npm run "seed"`, `npm run se''ed`, `node "scripts"/seed.js`) | P2 | Dev |
-| 82 | `guard.mjs:68-69`: en `SEED_RUN` el grupo `(\.js)?` sobra (`seed\b` ya coincide antes de `.js`, `.mjs`, `.cjs`, `seed-x` y `seed:x`). Dejar `scripts[\\/]seed\b` y corregir el comentario a "con cualquier extensión o sufijo" | P2 | Dev |
-| 83 | `guard.test.mjs:121-124`: faltan pruebas de `SEED_RUN` con flags con valor antes del subcomando (`npm --silent run seed`, `npm --prefix . run seed`), de `npm run -w server seed`, `npm run -- seed` y `npm run seed:reset`, y de los casos permitidos en PowerShell para backend y frontend (relacionado con #81) | P2 | Dev |
 | 80 | `guard.mjs:54`: el arquitecto puede escribir cualquier archivo en `docs/decisiones/` (`.js`, `.json`) y editar ADRs aceptados; `arquitecto.md:17` solo autoriza `ADR-NNN-<tema>.md`. Exigir `^docs/decisiones/adr-\d{3}-[\w-]+\.md$` y decidir en S52 si los ADRs existentes son editables | P2 | Dev |
 | 81 | `guard.test.mjs:86-171`: faltan pruebas de `MultiEdit` en los límites por carpeta, de un `.env` dentro del ámbito (backend escribiendo `server/.env`), de PowerShell en los casos permitidos de backend y frontend, y de las variantes de #78 y #79 | P2 | Dev |
+| 82 | `guard.mjs:68-69`: en `SEED_RUN` el grupo `(\.js)?` sobra (`seed\b` ya coincide antes de `.js`, `.mjs`, `.cjs`, `seed-x` y `seed:x`). Dejar `scripts[\\/]seed\b` y corregir el comentario a "con cualquier extensión o sufijo" | P2 | Dev |
+| 83 | `guard.test.mjs:121-124`: faltan pruebas de `SEED_RUN` con flags con valor antes del subcomando (`npm --silent run seed`, `npm --prefix . run seed`), de `npm run -w server seed`, `npm run -- seed` y `npm run seed:reset`, y de los casos permitidos en PowerShell para backend y frontend (relacionado con #81) | P2 | Dev |
+
+## Bandeja de borradores y autonomía (ADR-003, 2026-11-02)
+
+Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md) (estado "Propuesto"). La implementación sigue sus 10 fases.
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 84 | ~~**Aceptar el ADR-003** (pasar de "Propuesto" a "Aceptado") antes de implementar la fase 1. S55 ya está decidida: se permite `PAGO_EN_REVISION → PERDIDO` con motivo obligatorio~~ **Cerrado (2026-11-02):** el usuario aceptó el ADR-003 tras dos revisiones; los menores de la segunda quedaron corregidos en el ADR, en #50 y en #99 | P0 | Usuario |
+| 85 | Conciliar los borradores que se quedan en `ENVIANDO` si el proceso se cae entre la transición y el resultado del gate: buscar el `Message` con la llave `draft:<id>` | P2 | Dev |
+| 86 | Reintentar borradores `FALLIDO`: con la misma llave el gate devuelve `DUPLICADO`, así que hace falta una llave de reintento | P2 | Dev |
+| 87 | Evaluar con datos de uso que los borradores expiren o se descarten al vencer la ventana o al tomar la conversación (S57) | P2 | Dev |
+| 88 | Autonomía por agente: documentos `scope: 'AGENTE'` y parámetro `agent` en `PUT /settings/autonomy` | P2 | Dev |
+| 89 | `PUT /settings/autonomy` solo para `ADMIN` y actor tomado de la sesión; `assignedUser` con el id del usuario (relacionado con #41 y S58) | P1 | Dev |
+| 90 | Reportar la métrica de primera respuesta (PRD §8) separada por modo de autonomía: en `SUPERVISADO` no se cumple el p95 < 60 s | P2 | Dev |
+| 91 | Pestaña "Escalamientos" de la Bandeja cuando exista el modelo `Escalation`, con su propio ADR (relacionado con #47) | P1 | Dev |
+| 92 | Agregar `AGENT_AUTONOMY_DEFAULT` a `.env.example` en la fase 4 (lo hace la sesión principal) | P1 | Dev |
+| 93 | Paginar `GET /contacts` para el kanban (hoy el tope es 200) | P2 | Dev |
+| 94 | Si el webhook se procesa y falla la creación del borrador, el reintento llega como duplicado y el lead se queda sin borrador (mismo caso que la respuesta actual; relacionado con la cola de S27) | P2 | Dev |
+| 95 | Validar con zod la salida del LLM (`{ agent, text }`) cuando sustituya al generador simulado (relacionado con #40) | P1 | Dev |
+| 96 | Al crear el modelo Pago, la transición manual `PAGO_EN_REVISION → PERDIDO` (S55) debe rechazar o cancelar el Pago `EN_REVISIÓN` con el motivo (**nunca confirmarlo**) y cerrar su escalamiento `PAGO`. Hoy, sin ese modelo, el comprobante puede quedar sin resolver (relacionado con #50) | P1 | Dev |
+| 97 | Un borrador **rechazado** deja al lead sin respuesta y sin alerta: hoy solo se espera que Recepción tome la conversación (C2). Definir un aviso o contador de "conversaciones sin respuesta tras un rechazo" en la Bandeja | P2 | Dev |
+| 98 | El reemplazo de borradores (S60, ADR-003 §5) ordena los mensajes entrantes por `_id`, lo que solo es seguro con **una instancia** del server. Con varias instancias, ordenar por `createdAt` + `_id` | P2 | Dev |
+| 99 | Fase 3 (backend): actualizar el comentario de `server/src/models/Contact.js:3-4`, que dice "(Perdido en cualquier punto)", a la regla del PRD §5 y S55 (excepto desde `Socio`) | P2 | Dev |

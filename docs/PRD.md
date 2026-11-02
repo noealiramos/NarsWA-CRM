@@ -6,6 +6,7 @@
 | Cliente | Fuerza Gym, Aguascalientes (1 sucursal) |
 | Versión | 0.1 (borrador para validación) |
 | Fecha | 2026-10-16 |
+| Enmiendas | 2026-11-02: niveles de autonomía de los agentes y Bandeja de borradores (§3.3, [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md), S54) |
 | Documentos relacionados | [PENDIENTES.md](PENDIENTES.md), [SUPUESTOS.md](SUPUESTOS.md), [negocio/](negocio/) (catálogo, horarios, FAQ y playbook; datos simulados con `[CONFIRMAR]`, S44) |
 
 ---
@@ -22,6 +23,8 @@ Fuerza Gym recibe leads por WhatsApp (orgánicos y de anuncios Click-to-WhatsApp
 
 **Propuesta:** agentes de IA especialistas atienden por WhatsApp 24/7, informan, agendan visitas y guían al pago. Un humano solo interviene para **confirmar pagos** y para **casos que salen del conocimiento del agente** (dudas no cubiertas, quejas, negociaciones o cuando el lead pide hablar con una persona).
 
+*Enmienda 2026-11-02:* mientras se valida el sistema, los agentes operan en modo **supervisado**: cada respuesta a un mensaje del lead es un borrador que un humano aprueba, edita o rechaza antes de que salga. El modo **autónomo** descrito arriba se activa explícitamente desde el CRM (§3.3).
+
 ---
 
 ## 2. Usuarios
@@ -31,7 +34,7 @@ Fuerza Gym recibe leads por WhatsApp (orgánicos y de anuncios Click-to-WhatsApp
 | Rol | Quién es | Necesidades principales |
 |---|---|---|
 | **Admin / Dueño** | Dueño o gerente del gimnasio | Configurar el conocimiento del negocio (planes, precios, horarios, FAQ, promociones, links de pago), gestionar usuarios, ver métricas de conversión y desempeño, y auditar conversaciones. También puede hacer todo lo que hace Recepción. |
-| **Recepción / Ventas** | Personal de mostrador | Atender la bandeja de escalamientos, validar o rechazar comprobantes de pago, registrar pagos presenciales, tomar y devolver conversaciones a la IA, y consultar leads y visitas agendadas. |
+| **Recepción / Ventas** | Personal de mostrador | Atender la bandeja de escalamientos, aprobar, editar o rechazar los borradores de los agentes en modo supervisado (§3.3), validar o rechazar comprobantes de pago, registrar pagos presenciales, tomar y devolver conversaciones a la IA, y consultar leads y visitas agendadas. |
 
 ### 2.2 Usuarios externos (interactúan por WhatsApp)
 
@@ -75,6 +78,20 @@ La arquitectura es multiagente: un router clasifica cada mensaje y lo deriva al 
 | `EMERGENCIA` *(documental, pendiente de implementar; prioridad máxima)* | Posible emergencia médica | Sí, **después** de indicar al lead que busque ayuda inmediata y llame al 911 |
 
 La clasificación detallada de cada situación está en [playbook-ventas.md §6](negocio/playbook-ventas.md). Al 2026-10-23 **ningún** tipo de escalamiento está implementado.
+
+### 3.3 Niveles de autonomía y Bandeja de borradores *(enmienda 2026-11-02, [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md))*
+
+| Nivel | Qué pasa con la respuesta del agente |
+|---|---|
+| `SUPERVISADO` *(por defecto)* | Se guarda como **borrador** en la **Bandeja**. Un humano la **aprueba** (tal cual o **editada**) y solo entonces se envía; si la **rechaza**, no se envía nada. |
+| `AUTONOMO` | Se envía directo, como describe §1. |
+
+- En la primera versión el nivel es **global** (un solo interruptor para todos los agentes). El nivel por agente queda para después.
+- **Alcance:** la supervisión aplica solo a las respuestas a mensajes entrantes. Los avisos de escalamiento (la indicación de `EMERGENCIA`, siempre de inmediato) y los mensajes de jobs y plantillas (bienvenida B5, seguimientos, recordatorios) **no** pasan por la Bandeja (S61, S62).
+- Los límites duros (§3.1) aplican en ambos niveles. Aprobar un borrador **no** confirma pagos ni cambia la etapa del lead.
+- Un borrador aprobado sale por la misma vía que cualquier mensaje y respeta el modo `HUMANO` y la ventana de 24 h: si la conversación se tomó o la ventana venció, no se envía y el borrador queda bloqueado con el motivo.
+- **Bandeja ≠ bandeja de escalamientos.** La Bandeja reúne los **borradores** pendientes de revisión; un borrador no es un escalamiento ni lo sustituye. Cuando existan los escalamientos (§3.2, C1), convivirán en la misma pantalla como secciones separadas.
+- Mientras no existan los agentes de IA (PENDIENTES #40), los borradores los genera un respondedor simulado que no da precios, horarios ni promociones (regla de oro 4).
 
 ---
 
@@ -128,9 +145,11 @@ La clasificación detallada de cada situación está en [playbook-ventas.md §6]
 | **Conocimiento** | horarios, ubicación, clases, reglamento, FAQ, promociones (con vigencia), datos SPEI, mensajes estándar (bienvenida, rechazo médico, fuera de horario) |
 | **Cita** | lead, fecha y hora, tipo (visita / clase de prueba), id del evento en Google Calendar, estado (agendada / asistió / no asistió / cancelada) |
 | **Usuario** | nombre, email, rol (`ADMIN` / `RECEPCION`), activo |
-| **Bitácora** | quién hizo qué y cuándo (confirmaciones de pago, cambios de conocimiento, tomas y devoluciones de conversación) |
+| **Bitácora** | quién hizo qué y cuándo (confirmaciones de pago, cambios de conocimiento, tomas y devoluciones de conversación, revisión de borradores, cambios de autonomía y de etapa) |
+| **Borrador** *(§3.3)* | conversación, lead, agente, mensaje del lead que lo originó, texto propuesto, texto final (el que se envió o se intentó enviar; igual al propuesto si no se editó), si se editó, estado (pendiente / enviando / enviado / bloqueado / fallido / rechazado / reemplazado), quién lo revisó y cuándo, motivo de rechazo o de bloqueo, mensaje enviado |
+| **Configuración de autonomía** *(§3.3)* | nivel (`SUPERVISADO` / `AUTONOMO`), alcance (global en la primera versión; por agente después), quién lo cambió y cuándo |
 
-**Etapas del pipeline:** `Nuevo` → `En conversación` → `Visita agendada` → `Visitó` → `Pago en revisión` → `Socio` · (`Perdido` en cualquier punto).
+**Etapas del pipeline:** `Nuevo` → `En conversación` → `Visita agendada` → `Visitó` → `Pago en revisión` → `Socio` · (`Perdido` en cualquier punto, excepto desde `Socio`; ver E1 y S55).
 
 ---
 
@@ -145,6 +164,7 @@ La clasificación detallada de cada situación está en [playbook-ventas.md §6]
 - **Integración con Google Calendar** para consultar disponibilidad y crear visitas o clases de prueba.
 - **Bandeja de conversaciones** con historial completo y vista en tiempo real.
 - **Bandeja de escalamientos** con contador, alerta sonora y filtros por tipo.
+- **Bandeja de borradores** (modo supervisado, §3.3): aprobar, editar o rechazar las respuestas de los agentes, e interruptor global de autonomía en la pantalla de Agentes.
 - **Notificaciones de escalamiento** por CRM, WhatsApp al staff y email.
 - **Handoff humano:** tomar la conversación, responder desde el CRM y devolverla a la IA.
 - **Flujo HITL de pagos:** cola de comprobantes, confirmar o rechazar, y registrar pagos presenciales.
@@ -304,6 +324,7 @@ La clasificación detallada de cada situación está en [playbook-ventas.md §6]
 - La ficha del lead muestra los datos, el historial de mensajes, las citas, los pagos y los escalamientos.
 - Recepción y Admin pueden mover etapas manualmente (por ejemplo, `Visitó`, `No asistió` o `Perdido`).
 - Las etapas no son estrictamente secuenciales: un lead puede pasar a `Socio` desde cualquier etapa cuando recepción registra un pago (B4). `Perdido` es manual en el MVP.
+- *Enmienda 2026-11-02 ([ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md)):* `No asistió` no es una etapa del pipeline (§5) sino un estado de la Cita. A mano no se puede mover **hacia** `Pago en revisión` ni **hacia** `Socio`, ni **salir** de `Socio`: esas transiciones las hace el flujo de pagos (B3, B4, PENDIENTES #50). Desde `Pago en revisión` solo se permite pasar a mano a `Perdido`, con **motivo obligatorio** (S55). Cada cambio manual queda en la bitácora.
 
 **E2. Dashboard de métricas**
 *Como dueño, quiero ver el desempeño del embudo y de la atención.*
