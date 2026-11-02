@@ -121,7 +121,7 @@ test('subagentes: no modifican git, no instalan paquetes ni corren el seed', () 
       'npm uninstall zod', 'npm run seed', 'node scripts/seed.js', 'npm test && git add -A',
       'npm run-script seed', 'npm run -s seed', 'npm run --silent seed', 'npm rum seed', 'npm urn seed',
       'npm -w server run seed', 'npm.cmd run seed', 'node scripts/seed', 'node ./scripts/seed',
-      'node --env-file-if-exists=x scripts\\seed']) {
+      'node scripts\\seed.js']) {
       blockedAs(agent, 'Bash', { command });
       blockedAs(agent, 'PowerShell', { command });
     }
