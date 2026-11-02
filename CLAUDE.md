@@ -68,7 +68,13 @@ npm run lint              lint de todo el repo
 4. Los agentes solo responden con datos de la base de conocimiento. Si un dato no está, escalan.
 
 ## Flujo de trabajo
-- Antes de implementar algo no trivial, revisar el PRD y los ADRs relevantes.
-- Las decisiones de arquitectura nuevas van en un ADR nuevo en `docs/decisiones/`.
+- Antes de implementar algo no trivial, revisar el PRD y los ADRs; las decisiones nuevas van en un ADR nuevo.
 - Commits pequeños con mensajes en español en modo imperativo. Nunca hacer `git push` (está
   bloqueado en `.claude/settings.json` y en el hook `.claude/hooks/guard.mjs`).
+
+## Equipo (`.claude/agents/`; reportan supuestos y pendientes, no hacen commits; límites en S52)
+La sesión principal coordina al equipo, hace los commits y mantiene `scripts/` y `docs/` (salvo los ADRs).
+- **arquitecto**: antes de codificar un cambio de API o de modelo; escribe el ADR en `docs/decisiones/`. No edita código.
+- **backend**: para implementar en `server/` (Express, Mongoose, zod) con sus pruebas, siguiendo el ADR.
+- **frontend**: para implementar en `client/` (React + Vite, componentes funcionales).
+- **revisor**: antes de cada commit; revisa el `git diff` sin editar y clasifica BLOQUEANTE / IMPORTANTE / MENOR.

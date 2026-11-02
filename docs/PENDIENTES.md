@@ -137,3 +137,31 @@ Hallazgos del subagente `revisor`. Prioridad: los IMPORTANTES quedan en **P1** y
 | 65 | La salida del seed mezcla idiomas (`contacts: N creados`, `scripts/seed.js:240`). Usar etiquetas en español | P2 | Dev |
 | 66 | Cobertura de `server/test/seed.test.js`: faltan dos `seed()` simultáneos (camino del duplicado 11000), la edición manual de un mensaje o conversación, y la verificación de fechas (primer mensaje `2026-10-12T16:00:00.000Z`) | P2 | Dev |
 | 67 | Al implementar los jobs (#49), excluir los contactos con la etiqueta `seed-fase4` (Carlos, Mariana, Jorge y el del anuncio quedarían como candidatos a seguimiento) | P2 | Dev |
+
+## Equipo de subagentes (revisión del 2026-10-23)
+
+Hallazgos del subagente `revisor` sobre `.claude/agents/`, `CLAUDE.md` y los permisos. B1, I1, I2 e I3 se atendieron en el mismo cambio (S52, S53, `guard.mjs` y `backend.md`); aquí queda lo que no se puede garantizar y los menores.
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 68 | **Límites de shell no garantizados** (S52): backend y frontend pueden escribir fuera de su carpeta con Bash (`cp`, `sed -i`, `node -e`, redirecciones) o con scripts del proyecto, y `npm test` ejecuta código del repo. Evaluar el sandbox de Claude Code con `filesystem.allowWrite` por agente (relacionado con #38) o quitar Bash a un agente si no lo necesita | P1 | Dev |
+| 69 | `CLAUDE.md` está en 80/80 líneas: compactarlo antes de agregar la estructura de `scripts/` y `npm run seed` (#58) | P2 | Dev |
+| 70 | No existe `.gitattributes` y git avisa de la conversión LF/CRLF. Evaluar `* text=auto eol=lf` con su propio supuesto | P2 | Dev |
+| 71 | `revisor.md:28`: agregar al punto "Ámbito" que los cambios en `scripts/`, `.claude/`, el `package.json` raíz o el lockfile deben venir de la sesión principal | P2 | Dev |
+| 72 | `revisor.md:38`: usar el formato genérico `ruta/archivo:línea` en lugar de `ruta/archivo.js:línea` | P2 | Dev |
+| 73 | El client no tiene script `test`: frontend solo verifica con `npm run build -w client`. Definir pruebas de UI si se esperan | P2 | Dev |
+| 74 | Los agentes no declaran `model` y heredan el de la sesión. Evaluar uno explícito (por ejemplo, el más capaz para revisor y arquitecto) | P2 | Dev |
+| 75 | **Recuperación (2026-10-23, cambios sin commit):** (a) repetir la **tercera revisión** del `revisor` sobre `guard.mjs`, `guard.test.mjs`, `settings.json` y S52/S53 (se interrumpió sin resultados); (b) comprobar, en un modo de permisos no automático, que `git add --dry-run -- CLAUDE.md` **pide confirmación** (regla `ask`, S53); (c) con revisión satisfactoria y autorización del usuario, crear el commit `chore: equipo de subagentes` | P0 | Dev |
+
+**Avance de #75 (2026-11-01):** (a) la tercera revisión del `revisor` terminó sin bloqueantes; su IMPORTANTE I1 (variantes del seed que no bloqueaba `SEED_RUN`) se corrigió en `guard.mjs` con pruebas, y sus MENORES quedan en #76-#81. (b) Prueba manual: al pedir `git add --dry-run -- CLAUDE.md` apareció el diálogo de autorización y el usuario lo rechazó. (c) sigue pendiente de autorización.
+
+### Tercera revisión del equipo de subagentes (2026-11-01)
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 76 | `settings.json:34-43`: `git diff\|log\|show *` están en `allow` y aceptan `--output=<archivo>`, que escribe sin confirmación. Agregar `Bash(git * --output*)` y `PowerShell(git * --output*)` a `ask` o mencionar la excepción en S53 | P2 | Dev |
+| 77 | S53 (`SUPUESTOS.md:91`) dice "con o sin `-w server\|client`", pero falta `npm run test -w client` en `allow`. Agregar la regla o ajustar el texto (relacionado con #73) | P2 | Dev |
+| 78 | `guard.mjs:178-191` falla abierto: una entrada JSON válida que no es objeto (`null`) lanza TypeError y sale con código 1, que no bloquea. Envolver `main()` en `try/catch` que bloquee, validar que `input` sea objeto y agregar una prueba con `null`. Confirmar si Claude Code reconoce `"onFailure": "block"` | P2 | Dev |
+| 79 | `guard.mjs:44` y `:62`: comillas y escapes evaden `GIT_PUSH` y `GIT_MUTATING` en la sesión principal, backend y frontend (`git pu''sh`, `git "pu"sh`, ``git pu`sh``, `cmd /c git pu^sh`). Quitar `'`, `"`, `` ` ``, `\` y `^` en una copia del comando antes de evaluar, con pruebas (relacionado con S37) | P2 | Dev |
+| 80 | `guard.mjs:54`: el arquitecto puede escribir cualquier archivo en `docs/decisiones/` (`.js`, `.json`) y editar ADRs aceptados; `arquitecto.md:17` solo autoriza `ADR-NNN-<tema>.md`. Exigir `^docs/decisiones/adr-\d{3}-[\w-]+\.md$` y decidir en S52 si los ADRs existentes son editables | P2 | Dev |
+| 81 | `guard.test.mjs:86-171`: faltan pruebas de `MultiEdit` en los límites por carpeta, de un `.env` dentro del ámbito (backend escribiendo `server/.env`), de PowerShell en los casos permitidos de backend y frontend, y de las variantes de #78 y #79 | P2 | Dev |
