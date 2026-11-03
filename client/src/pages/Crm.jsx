@@ -50,7 +50,7 @@ export default function Crm() {
     <section className="crm">
       <div className="crm-list">
         <div className="crm-toolbar">
-          <h1>Contactos</h1>
+          <h1>Conversaciones</h1>
           <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label="Filtrar por etapa">
             <option value="">Todas las etapas</option>
             {Object.entries(STAGE_LABELS).map(([value, label]) => (

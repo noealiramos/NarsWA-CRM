@@ -170,7 +170,7 @@ Hallazgos del subagente `revisor` sobre `.claude/agents/`, `CLAUDE.md` y los per
 
 ## Bandeja de borradores y autonomía (ADR-003, 2026-11-02)
 
-Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md) (estado "Propuesto"). La implementación sigue sus 10 fases.
+Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia.md) (estado "Aceptado"). La implementación sigue sus 10 fases.
 
 | # | Pendiente | Prioridad | Responsable |
 |---|---|---|---|
@@ -190,3 +190,4 @@ Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia
 | 97 | Un borrador **rechazado** deja al lead sin respuesta y sin alerta: hoy solo se espera que Recepción tome la conversación (C2). Definir un aviso o contador de "conversaciones sin respuesta tras un rechazo" en la Bandeja | P2 | Dev |
 | 98 | El reemplazo de borradores (S60, ADR-003 §5) ordena los mensajes entrantes por `_id`, lo que solo es seguro con **una instancia** del server. Con varias instancias, ordenar por `createdAt` + `_id` | P2 | Dev |
 | 99 | Fase 3 (backend): actualizar el comentario de `server/src/models/Contact.js:3-4`, que dice "(Perdido en cualquier punto)", a la regla del PRD §5 y S55 (excepto desde `Socio`) | P2 | Dev |
+| 100 | Fallback SPA en producción: el server no sirve `client/dist`, así que recargar o entrar directo a `/bandeja` (u otra ruta) daría 404 en un servidor estático sin fallback a `index.html`. En desarrollo, Vite ya lo resuelve (verificado el 2026-11-02 en las cinco rutas, con barra final y con query string) | P1 | Dev |
