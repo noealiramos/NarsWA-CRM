@@ -191,3 +191,21 @@ Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia
 | 98 | El reemplazo de borradores (S60, ADR-003 §5) ordena los mensajes entrantes por `_id`, lo que solo es seguro con **una instancia** del server. Con varias instancias, ordenar por `createdAt` + `_id` | P2 | Dev |
 | 99 | Fase 3 (backend): actualizar el comentario de `server/src/models/Contact.js:3-4`, que dice "(Perdido en cualquier punto)", a la regla del PRD §5 y S55 (excepto desde `Socio`) | P2 | Dev |
 | 100 | Fallback SPA en producción: el server no sirve `client/dist`, así que recargar o entrar directo a `/bandeja` (u otra ruta) daría 404 en un servidor estático sin fallback a `index.html`. En desarrollo, Vite ya lo resuelve (verificado el 2026-11-02 en las cinco rutas, con barra final y con query string) | P1 | Dev |
+
+## Capa LLM (ADR-004, 2026-11-02)
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 101 | **Confirmar con Anthropic** si los términos de una suscripción de Claude Code permiten atender clientes reales de un negocio. Hasta entonces, producción usa `LLM_ENGINE=api` (S66) | P1 | Usuario |
+| 102 | ~~Verificar con `npm run probar-llm`, desde `spawn` de Node: `--tools ''` como argumento vacío, `system` con comillas, saltos de línea y acentos, y los ids completos de modelo en el CLI (S67)~~ **Cerrado (2026-11-02):** verificado con `claude` 2.1.314 desde `spawn` de Node: el argumento vacío de `--tools` funciona, `claude-sonnet-5-5` se acepta como `--model`, un `system` con comillas, saltos de línea, acentos y «» llega íntegro, y un mensaje que intenta falsificar un turno no desplaza la instrucción del `system` (una muestra, no una garantía) | P1 | Dev |
+| 103 | Prompt de `system` > 24 000 caracteres (base de conocimiento grande): `--system-prompt-file` no está documentado. Decidir en otro ADR: recortar con RAG, pasarlo a `api` u otra vía | P2 | Dev |
+| 104 | Política de reintentos y de fallback entre motores: hoy `LlmError` trae `retryable` y decide quien llama | P2 | Dev |
+| 105 | `temperature` sin fijar y `max_tokens` fijo en `api`; volverlos parámetros si los agentes lo necesitan | P2 | Dev |
+| 106 | Evaluar `--input-format stream-json` (multi-turno real) si el transcript degrada la calidad de las respuestas (S69) | P2 | Dev |
+| 107 | Aviso de privacidad hacia los leads: sus conversaciones salen hacia Anthropic | P2 | Cliente |
+| 108 | Guardar `usage` en `Draft` u otra entidad para estadísticas y presupuesto por agente (relacionado con #30 y #90) | P2 | Dev |
+| 109 | Reevaluar un límite de concurrencia si hay saturación de procesos `claude` (un proceso por llamada, ~3 s de arranque) Además, `child.kill()` en Windows mata solo el proceso y no a sus nietos: aceptable con un `claude.exe`, pero revisarlo si el CLI empieza a lanzar subprocesos | P2 | Dev |
+| 110 | Agregar una nota en ADR-001 (el SDK sigue siendo el motor de producción; el CLI es un motor adicional de desarrollo) y ajustar la línea "IA" de `CLAUDE.md`. Lo hace el `arquitecto` y el usuario, porque `CLAUDE.md` es suyo | P2 | Dev |
+| 111 | Logging estructurado de la capa LLM (ADR-004, regla 5): motor, modelo, tokens y `code`, **sin** `system`, `messages` ni `text`. Hoy no se escribe ningún log (solo la advertencia de `cli` en producción) | P2 | Dev |
+| 112 | Pruebas faltantes de la capa LLM: que importar `llm/index.js` no cargue el SDK, el tope de 2 000 caracteres de stderr y la concurrencia. Tampoco hay prueba automática contra el `claude` real ni contra la API real: solo la verificación manual con `probar-llm` | P2 | Dev |
+| 113 | Capa LLM: el recorte de 300 caracteres del `result` o stderr del proveedor que va en `LlmError.message` podría repetir el `system` o el texto del lead si el propio proveedor lo hace (el ADR lo permite). Para cerrarlo, redactar `system` y mensajes dentro del texto recortado. Además, la prueba de `cwd` imposible deja un archivo temporal `fuerza-gym-llm-archivo-<pid>` en `os.tmpdir()` y la de "una sola resolución" usa un hijo falso, no un proceso real | P2 | Dev |
