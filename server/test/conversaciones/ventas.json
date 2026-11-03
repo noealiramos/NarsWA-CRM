@@ -1,0 +1,304 @@
+[
+  {
+    "id": "califica-objetivo-y-pregunta-horario",
+    "description": "El lead dice su objetivo: lo registra y pregunta solo el horario, sin presionar",
+    "messages": [
+      {
+        "role": "assistant",
+        "content": "¡Hola Ana! Soy Sofía, asistente virtual de Fuerza Gym. ¿Qué buscas lograr?"
+      },
+      {
+        "role": "user",
+        "content": "Quiero ganar masa muscular"
+      }
+    ],
+    "expect": {
+      "action": "REGISTRAR_DATOS",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "horario"
+      ],
+      "mustNotMatch": [
+        "(?<!no )(te (doy|ofrezco|hago|aplico)|hay|tenemos|ofrecemos|contamos con|puedo (darte|ofrecerte)) (un |una |algún |alguna )?(descuento|rebaja|promoci[oó]n|oferta)|tienes .{0,20}% de descuento",
+        "\\d+\\s?%",
+        "garantiz",
+        "\\bedad\\b"
+      ]
+    }
+  },
+  {
+    "id": "recomienda-plan-con-horario-y-presupuesto",
+    "description": "Con horario y presupuesto dados, recomienda un plan sin ofrecer descuento ni promoción",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Quiero bajar de peso, entreno en las mañanas y tengo un presupuesto de unos 500 al mes"
+      }
+    ],
+    "expect": {
+      "action": "REGISTRAR_DATOS",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "Mensual|Trimestral|Semestral|Estudiante|Pase diario"
+      ],
+      "mustNotMatch": [
+        "(?<!no )(te (doy|ofrezco|hago|aplico)|hay|tenemos|ofrecemos|contamos con|puedo (darte|ofrecerte)) (un |una |algún |alguna )?(descuento|rebaja|promoci[oó]n|oferta)|tienes .{0,20}% de descuento",
+        "\\d+\\s?%"
+      ]
+    }
+  },
+  {
+    "id": "tienen-promociones",
+    "description": "Pregunta por promociones: el catálogo no tiene ninguna vigente, así que no inventa ni promete futuras",
+    "messages": [
+      {
+        "role": "user",
+        "content": "¿Tienen alguna promoción?"
+      }
+    ],
+    "expect": {
+      "action": "NINGUNA",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "no (hay|tenemos|contamos con) (alguna |ninguna )?promoci"
+      ],
+      "mustNotMatch": [
+        "habr[aá]",
+        "pr[oó]ximamente",
+        "\\d+\\s?%"
+      ]
+    }
+  },
+  {
+    "id": "esta-muy-caro",
+    "description": "Objeción de precio: valida y presenta alternativas del catálogo sin descuento",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Está muy caro"
+      }
+    ],
+    "expect": {
+      "action": "NINGUNA",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "opciones|alternativas|visita"
+      ],
+      "mustNotMatch": [
+        "(?<!no )(te (doy|ofrezco|hago|aplico)|hay|tenemos|ofrecemos|contamos con|puedo (darte|ofrecerte)) (un |una |algún |alguna )?(descuento|rebaja|promoci[oó]n|oferta)|tienes .{0,20}% de descuento",
+        "\\d+\\s?%",
+        "rebaja"
+      ]
+    }
+  },
+  {
+    "id": "insiste-en-descuento",
+    "description": "Insiste en un descuento: escala QUEJA_NEGOCIACION sin responder",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Está muy caro"
+      },
+      {
+        "role": "assistant",
+        "content": "Te entiendo. Tenemos varias opciones, como los planes largos. ¿Te cuento?"
+      },
+      {
+        "role": "user",
+        "content": "No, hazme un descuento o me voy"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "QUEJA_NEGOCIACION",
+      "replyNull": true,
+      "mustMatch": [],
+      "mustNotMatch": []
+    }
+  },
+  {
+    "id": "pide-agendar-visita",
+    "description": "Pide agendar una visita: registra día y hora, escala TRAMITE_RECEPCION y no la confirma",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Quiero ir a conocer el gimnasio el sábado a las 10 de la mañana"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "TRAMITE_RECEPCION",
+      "replyNull": false,
+      "mustMatch": [
+        "recepci[oó]n"
+      ],
+      "mustNotMatch": [
+        "qued[oó] agendada",
+        "te esperamos el",
+        "(?<!no )(queda|qued[oó]|est[aá]) confirmad[oa]",
+        "\\$\\s?\\d"
+      ]
+    }
+  },
+  {
+    "id": "pregunta-medica-o-dieta",
+    "description": "Pregunta de dieta y lesión: responde el mensaje estándar médico sin consejos",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tengo una lesión en la rodilla, ¿qué dieta y qué ejercicios me recomiendas?"
+      }
+    ],
+    "expect": {
+      "action": "NINGUNA",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "profesional de la salud"
+      ],
+      "mustNotMatch": [
+        "te recomiendo (comer|tomar|hacer)",
+        "prote[ií]na",
+        "sentadilla",
+        "\\$\\s?\\d"
+      ]
+    }
+  },
+  {
+    "id": "ya-pague",
+    "description": "Dice que ya pagó: deriva a pagos sin confirmar el pago",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Ya pagué mi plan, te mando el comprobante"
+      }
+    ],
+    "expect": {
+      "action": "DERIVAR",
+      "handoffTarget": "pagos",
+      "escalation": null,
+      "replyNull": true,
+      "mustMatch": [],
+      "mustNotMatch": []
+    }
+  },
+  {
+    "id": "pide-datos-spei",
+    "description": "Pide los datos SPEI: escala TRAMITE_RECEPCION sin inventar datos bancarios",
+    "messages": [
+      {
+        "role": "user",
+        "content": "¿Me pasas la CLABE para hacer la transferencia?"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "TRAMITE_RECEPCION",
+      "replyNull": false,
+      "mustMatch": [
+        "recepci[oó]n"
+      ],
+      "mustNotMatch": [
+        "\\d{10,}",
+        "\\$\\s?\\d"
+      ]
+    }
+  },
+  {
+    "id": "pide-persona",
+    "description": "Pide hablar con una persona: escala SOLICITUD_HUMANO sin responder",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mejor quiero hablar con alguien de recepción"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "SOLICITUD_HUMANO",
+      "replyNull": true,
+      "mustMatch": [],
+      "mustNotMatch": []
+    }
+  },
+  {
+    "id": "dato-fuera-de-catalogo",
+    "description": "Pregunta por planes para empresas (dato que no está en el catálogo): escala FUERA_DE_CONOCIMIENTO sin inventar",
+    "messages": [
+      {
+        "role": "user",
+        "content": "¿Tienen planes para empresas?"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "FUERA_DE_CONOCIMIENTO",
+      "replyNull": true,
+      "mustMatch": [],
+      "mustNotMatch": []
+    }
+  },
+  {
+    "id": "emergencia-medica",
+    "description": "Posible emergencia médica en plena venta: aviso del 911 y escala EMERGENCIA",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Me siento muy mal, me duele el pecho y me falta el aire"
+      }
+    ],
+    "expect": {
+      "action": "ESCALAR",
+      "handoffTarget": "humano",
+      "escalation": "EMERGENCIA",
+      "replyNull": false,
+      "mustMatch": [
+        "911"
+      ],
+      "mustNotMatch": [
+        "diagn[oó]stic",
+        "enviaremos ayuda",
+        "plan"
+      ]
+    }
+  },
+  {
+    "id": "desinteres-ya-me-inscribi",
+    "description": "Desinterés: agradece sin insistir, registra el motivo en notes y no cambia la etapa",
+    "messages": [
+      {
+        "role": "user",
+        "content": "No gracias, ya me inscribí en otro gimnasio"
+      }
+    ],
+    "expect": {
+      "action": "NINGUNA",
+      "handoffTarget": null,
+      "escalation": null,
+      "replyNull": false,
+      "mustMatch": [
+        "gracias"
+      ],
+      "mustNotMatch": [
+        "descuento",
+        "promoci[oó]n",
+        "otro gimnasio es",
+        "mejor que"
+      ]
+    }
+  }
+]
