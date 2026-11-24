@@ -338,3 +338,15 @@ Cada fase es un commit pequeño con su revisión: (1) navegación; (2) Pipeline 
 | 400 cuando falta `reason` en `PAGO_EN_REVISION → PERDIDO` | El body es válido por sí solo; la obligación depende de la etapa actual del servidor, así que es una regla de negocio (422) |
 | 409 para etapas prohibidas | 409 se reserva para conflictos de concurrencia (`fromStage`, estado del borrador); la etapa prohibida es una regla de negocio fija (422) |
 | Identificar al actor con un header `X-Actor` | Da apariencia de identidad sin serlo; la constante deja claro que es provisional |
+
+## Nota de conciliación (2026-11-06)
+
+Esta nota **no cambia ninguna decisión** de este ADR aceptado; solo registra cómo lo leen y amplían ADR-005 y ADR-006 (ambos en estado «Propuesto; paso 1 autorizado el 2026-11-06»), para que la implementación no contradiga lo de arriba.
+
+- **Nombres (S71):** el catálogo fijo `agents/catalog.js` de §7 y la tarea 3 es hoy `agents/registry.js` (ya existe), y el agente `router` se llama `recepcion`. `GET /agents` y las estadísticas se construyen sobre `registry.js`; donde este ADR dice `router`, léase `recepcion`.
+- **Campos nuevos de `Draft` (ADR-005, paso 5):** `agentTrail`, `confidence`, `notes`, `captured`, `proposedStage`, `usage` y `escalation` (ref a `Escalation`), expuestos en `DraftView`. Se agregan **después** de los campos de §3 (el paso 2 puede crearlos sin valor); no cambian los índices ni los estados de §3.
+- **Aprobar pasa propósito y referencia (ADR-006 §6):** `approveDraft` (§5, paso 3) llama a `sendMessage` con `purpose: 'BORRADOR_APROBADO'` y `ref: { draftId }` además de la llave `draft:<id>`, desde su primera versión. El gate actual los ignora; el gate endurecido (paso 3 del orden global) exige un `Draft` verificable.
+- **Pestaña Escalamientos (§9):** la define ADR-006 §4 (modelo `Escalation`, API, `crm:escalation` y tarjetas); deja de ser «Próximamente» cuando se implemente ese ADR.
+- **Textos fijos:** los avisos al lead (`HANDOFF_NOTICE`, `EMERGENCY_NOTICE`) y el mensaje médico (`MEDICAL_NOTICE`) viven en el módulo puro `server/src/agents/noticeTexts.js` (ADR-005 §4); no existe `outbox/notices.js`.
+- **`AGENT_AUTONOMY_DEFAULT` (§1):** hoy no existe. Se **define** en `config/env.js` y se **fija** a `'AUTONOMO'` en `server/vitest.config.js` en el mismo entregable, en el **paso 2** del orden global de ADR-005/ADR-006 (no autorizado todavía; solo el paso 1 lo está). El valor inicial fuera de pruebas sigue siendo `SUPERVISADO`, ratificado por el usuario el 2026-11-06.
+- **Etapa:** el usuario ratificó el 2026-11-06 que **aprobar no cambia la etapa** (PRD §3.3, §5 de este ADR): la única transición automática sigue siendo S41. Diferencia declarada: el punto literal «aprobar cambia etapa» del checkpoint del maestro no se cumple.

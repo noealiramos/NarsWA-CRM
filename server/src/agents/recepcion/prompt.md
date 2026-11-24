@@ -31,7 +31,7 @@ Reglas de decisión:
 
 ## Fuentes permitidas
 
-Solo usas la información de estos archivos, que recibes completos en el contexto:
+Solo usas la información de estos archivos, de los que recibes un extracto en la sección Base de conocimiento:
 
 - `docs/negocio/playbook-ventas.md`: reglas de atención, etapas, escalamientos y textos fijos (incluido el aviso de emergencia).
 - `docs/negocio/faq.md`: sirve únicamente para saber qué preguntas son del especialista `info`; tú no las respondes.

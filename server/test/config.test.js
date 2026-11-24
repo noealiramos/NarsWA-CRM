@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEV_MONGODB_URI, cliChildEnv, loadConfig, redactUri } from '../src/config/env.js';
+import { DEV_MONGODB_URI, cliChildEnv, config, loadConfig, redactUri } from '../src/config/env.js';
 
 describe('config', () => {
   it('usa valores por defecto de desarrollo', () => {
@@ -57,6 +57,42 @@ describe('config', () => {
     it('rechaza un modelo con guion inicial', () => {
       expect(() => loadConfig({ ANTHROPIC_MODEL_AGENTS: '--tools' })).toThrow(/ANTHROPIC_MODEL_AGENTS/);
       expect(() => loadConfig({ ANTHROPIC_MODEL_ROUTER: 'a b' })).toThrow(/ANTHROPIC_MODEL_ROUTER/);
+    });
+  });
+
+  describe('orquestador de agentes (ADR-005)', () => {
+    it('AGENT_RUNTIME es SIMULADO por defecto y con valor vacío', () => {
+      expect(loadConfig({}).AGENT_RUNTIME).toBe('SIMULADO');
+      expect(loadConfig({ AGENT_RUNTIME: '' }).AGENT_RUNTIME).toBe('SIMULADO');
+      expect(loadConfig({ AGENT_RUNTIME: 'LLM' }).AGENT_RUNTIME).toBe('LLM');
+      expect(loadConfig({ AGENT_RUNTIME: 'SIMULADO' }).AGENT_RUNTIME).toBe('SIMULADO');
+    });
+
+    it('rechaza un AGENT_RUNTIME desconocido o en minúsculas', () => {
+      expect(() => loadConfig({ AGENT_RUNTIME: 'llm' })).toThrow(/AGENT_RUNTIME/);
+      expect(() => loadConfig({ AGENT_RUNTIME: 'REAL' })).toThrow(/AGENT_RUNTIME/);
+    });
+
+    it('las pruebas corren con AGENT_RUNTIME=SIMULADO fijado en vitest.config.js', () => {
+      expect(config.AGENT_RUNTIME).toBe('SIMULADO');
+    });
+
+    it('AGENT_CONFIDENCE_THRESHOLD es 0.5 por defecto y con valor vacío (no 0)', () => {
+      expect(loadConfig({}).AGENT_CONFIDENCE_THRESHOLD).toBe(0.5);
+      expect(loadConfig({ AGENT_CONFIDENCE_THRESHOLD: '' }).AGENT_CONFIDENCE_THRESHOLD).toBe(0.5);
+      expect(loadConfig({ AGENT_CONFIDENCE_THRESHOLD: ' \t ' }).AGENT_CONFIDENCE_THRESHOLD).toBe(0.5);
+    });
+
+    it('AGENT_CONFIDENCE_THRESHOLD acepta valores en [0, 1]', () => {
+      expect(loadConfig({ AGENT_CONFIDENCE_THRESHOLD: '0.6' }).AGENT_CONFIDENCE_THRESHOLD).toBe(0.6);
+      expect(loadConfig({ AGENT_CONFIDENCE_THRESHOLD: '0' }).AGENT_CONFIDENCE_THRESHOLD).toBe(0);
+      expect(loadConfig({ AGENT_CONFIDENCE_THRESHOLD: '1' }).AGENT_CONFIDENCE_THRESHOLD).toBe(1);
+    });
+
+    it('rechaza un umbral fuera de [0, 1] o no numérico', () => {
+      for (const value of ['1.5', '-0.1', 'abc']) {
+        expect(() => loadConfig({ AGENT_CONFIDENCE_THRESHOLD: value }), value).toThrow(/AGENT_CONFIDENCE_THRESHOLD/);
+      }
     });
   });
 

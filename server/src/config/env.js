@@ -27,6 +27,13 @@ const envSchema = z
     ANTHROPIC_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     ANTHROPIC_MODEL_ROUTER: modelId('claude-haiku-5-5'),
     ANTHROPIC_MODEL_AGENTS: modelId('claude-sonnet-5-5'),
+    // Orquestador de agentes (ADR-005 §1 y §4). SIMULADO por defecto (ratificado 2026-11-06): un arranque sin
+    // configurar nunca llama a un LLM. El preprocess evita que '' se convierta en 0 con coerce.
+    AGENT_RUNTIME: z.preprocess(emptyToUndefined, z.enum(['SIMULADO', 'LLM']).default('SIMULADO')),
+    AGENT_CONFIDENCE_THRESHOLD: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.coerce.number().min(0).max(1).default(0.5),
+    ),
   })
   .transform((env, ctx) => {
     // Se acumulan los issues para que uno no oculte al otro.

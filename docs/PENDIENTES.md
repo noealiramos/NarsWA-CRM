@@ -223,3 +223,26 @@ Pendientes que deja el [ADR-003](decisiones/ADR-003-bandeja-borradores-autonomia
 | 120 | Coherencia de SPEI cuando exista el agente `pagos`: `recepcion` deriva "datos SPEI" a `pagos`, mientras que `ventas` los escala como `TRAMITE_RECEPCION` (playbook §6). Decidir un solo criterio | P2 | Dev |
 | 121 | El ejecutor (#114) debe soportar el **traspaso en el mismo turno**: `recepcion` deriva con `reply: null` y el especialista responde sin mensaje intermedio. Así, una pregunta de salud que llega a `recepcion` pasa por `ventas`, y el mensaje §8.4 y el aviso del 911 dependen de ese traspaso. También debe evaluar las regex de `mustNotMatch` con lookbehind (`(?<!…)`) de los casos, que funcionan en Node 22 | P1 | Dev |
 | 122 | Casos de conversación (`server/test/conversaciones/`): las regex de oferta de descuento y de visita confirmada usan un lookbehind `(?<!no )` que solo detecta "no " inmediatamente antes (no cubre "ni", "nunca" ni "no se puede"), y la tabla de ejemplos de `agents.test.js` duplica esas regex (la prueba de sincronía las vigila; hay que agregar cada límite duro nuevo a la tabla). Afinar al evaluar respuestas reales (#117) | P2 | Dev |
+
+**Avance (2026-11-06):** el diseño de #114, #115, #121 y #103 está en [ADR-005](decisiones/ADR-005-orquestador-agentes.md), y el de #47 y #91 en [ADR-006](decisiones/ADR-006-escalamientos.md). Ambos están en «Propuesto» con el paso 1 autorizado; siguen abiertos hasta que se implementen. La actualización del ADR-003 que pedía #115 está en su «Nota de conciliación».
+
+## Orquestador y escalamientos (ADR-005 y ADR-006, 2026-11-06)
+
+| # | Pendiente | Prioridad | Responsable |
+|---|---|---|---|
+| 123 | **Autorizar los pasos 2 a 8** del orden global (modelos y borradores, gate, escalamientos, cableado, UI, QA y demostración). Hoy solo el paso 1 está autorizado | P0 | Usuario |
+| 124 | **Bloqueo de contactos frente a `EMERGENCIA`**: elegir A (bloqueo absoluto), B (excepción auditada solo para el aviso del 911) o C (alerta para contactar por otro medio), y el camino de detección para contactos bloqueados (ejecutar solo `recepcion` acotada, regla determinista o ninguno). Mientras no se decida, el bloqueo queda fuera de la base y ese requisito no se cumple (S87) | P1 | Usuario |
+| 125 | Cierre automático del incidente sistémico cuando la IA vuelve a responder: resolver antes la carrera con un fallo concurrente (serializar por conversación o reintentar la búsqueda). Hoy el cierre es manual (S85) | P2 | Dev |
+| 126 | Motivo propio `SIN_ENTRANTE_PREVIO` en el gate (hoy se reporta como `FUERA_DE_VENTANA_24H`) y panel de auditoría de envíos en la conversación (la base solo trae `GET /audit/outbound`) | P2 | Dev |
+| 127 | Falsos positivos y negativos del `replyGuard` y de `priceClaims` (S80): nombres propios como «Dolores» en G4, la ventana de negación por cláusula, menciones negadas de un concepto y montos sin marcador. Afinar con respuestas reales (relacionado con #117 y #122) | P2 | Dev |
+| 128 | QA (paso 7): etiquetar los casos con `hardLimit`, decidir qué patrones pasan a `forbidden` (los demás `mustNotMatch` cuentan como fallo funcional), agregar `priceClaims` y `amountsInCatalog` al caso de precios y el guion falso `guiones-eval.json` | P1 | Dev |
+| 129 | Demostración manual (nivel N3): guion del checkpoint con `AGENT_RUNTIME=LLM` y motor real, y dónde guardar la evidencia en `docs/` | P1 | Dev |
+| 130 | Calibrar el umbral de confianza con la distribución real de `confidence` antes de activar `AUTONOMO` | P2 | Dev |
+| 131 | Caché de prompts (`cache_control`) en el motor `api` para bajar el costo del `system` repetido | P2 | Dev |
+| 132 | Digestos rancios: la prueba de hash detecta que una fuente cambió, pero actualizar `knowledge.md` es manual y requiere revisión humana | P2 | Dev |
+| 133 | Conciliación de escalamientos: programar `reconcileEscalations()` de forma periódica, reparar registros huérfanos y revisar incidentes resueltos con mensajes sin contar | P2 | Dev |
+| 134 | Aviso al lead fuera del horario de recepción (playbook §6): requiere el horario como configuración (S2, PRD D3) | P2 | Dev |
+| 135 | Notificaciones al personal por WhatsApp y email ante escalamientos (PRD C1; depende de #13, #18 y #19) y alerta cuando un lead escribe en una conversación ya en `HUMANO` (relacionado con #97) | P2 | Dev |
+| 136 | Métricas del PRD §8: separar los escalamientos de `source = SISTEMA` de los del agente para no atribuir a la IA fallos de infraestructura (relacionado con #53) | P2 | Dev |
+
+**Avance del paso 1 (Codex, 2026-11-06):** implementadas 1a–1d sobre la 1a recibida de Claude: contrato y guardas revisados, digestos con hashes y presupuesto, normalización pura del historial, `runAgentTurn` con motor inyectable y casos/esquema compartido (incluido `integracion.json`). `inbound.js`, modelos y gate siguen sin cambios, y los agentes siguen `connected: false`. No cierra #114/#121 de punta a punta: faltan los efectos, el cableado y los niveles N2/N3. El runner y `/probar-agente` siguen en el paso 7 (#128); `priceClaims`/`forbidden` tienen esquema y pruebas sintéticas, pero todavía no evalúan respuestas. G3 puede rechazar una mención inocua de «promociones» y G4 «mediciones»/«Dolores»; quedan dentro de #127. Estado y comandos de traspaso en [TRASPASO-CODEX-PASO-1.md](TRASPASO-CODEX-PASO-1.md).

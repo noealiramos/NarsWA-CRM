@@ -14,6 +14,10 @@ export const AGENTS = [
       'Equivale al Recepcionista / Router del PRD §3: saluda, clasifica la intención y deriva al especialista ' +
       '(ventas, info o pagos) o escala a una persona. Solo responde saludos y el aviso de emergencia.',
     promptPath: promptFile('recepcion'),
+    knowledge: fileURLToPath(new URL('./recepcion/knowledge.md', import.meta.url)),
+    model: 'ROUTER',
+    maxSystemChars: 14000,
+    maxKnowledgeChars: 4500,
     sources: ['docs/negocio/playbook-ventas.md', 'docs/negocio/faq.md'],
     escalations: ['SOLICITUD_HUMANO', 'QUEJA_NEGOCIACION', 'FUERA_DE_CONOCIMIENTO', 'EMERGENCIA'],
     connected: false,
@@ -25,6 +29,10 @@ export const AGENTS = [
       'Califica objetivo, horario y presupuesto, recomienda un plan del catálogo, maneja objeciones sin ' +
       'descuentos y guía hacia la visita gratuita o la inscripción.',
     promptPath: promptFile('ventas'),
+    knowledge: fileURLToPath(new URL('./ventas/knowledge.md', import.meta.url)),
+    model: 'AGENTS',
+    maxSystemChars: 21500,
+    maxKnowledgeChars: 11000,
     sources: ['docs/negocio/catalogo.md', 'docs/negocio/playbook-ventas.md'],
     escalations: [
       'QUEJA_NEGOCIACION',

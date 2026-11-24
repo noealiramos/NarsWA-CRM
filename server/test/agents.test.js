@@ -3,51 +3,23 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { ESCALATION_TYPES } from '../src/agents/escalationTypes.js';
 import { AGENTS, getAgent } from '../src/agents/registry.js';
+import { EMERGENCY_NOTICE } from '../src/agents/noticeTexts.js';
+import { caseSchema, parseConversationCases } from './helpers/conversationCases.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const REGISTRY_FILE = fileURLToPath(new URL('../src/agents/registry.js', import.meta.url));
 const CASES_DIR = fileURLToPath(new URL('./conversaciones/', import.meta.url));
 
-const ESCALATIONS = [
-  'PAGO',
-  'FUERA_DE_CONOCIMIENTO',
-  'SOLICITUD_HUMANO',
-  'QUEJA_NEGOCIACION',
-  'TRAMITE_RECEPCION',
-  'EMERGENCIA',
-];
+// Catálogo único de tipos (ADR-006 §1): mismos seis tipos que la lista local que reemplaza.
+const ESCALATIONS = ESCALATION_TYPES;
 const CONTRACT_KEYS = ['agent', 'reply', 'stage', 'action', 'handoff', 'confidence', 'notes'];
 const SPECIALISTS = ['ventas', 'info', 'pagos'];
 const PESOS = /\$\s?\d/;
 const CHANNEL_REFS = /channels\/|outbox\//;
 
-// Forma de un caso de conversación (el contrato aún no tiene esquema propio; solo se valida el archivo de casos).
-const regexList = z.array(
-  z.string().refine((source) => {
-    try {
-      new RegExp(source, 'i');
-      return true;
-    } catch {
-      return false;
-    }
-  }, 'regex no compilable'),
-);
-const caseSchema = z.object({
-  id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
-  description: z.string().min(1),
-  messages: z
-    .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1) }))
-    .min(1),
-  expect: z.object({
-    action: z.enum(['NINGUNA', 'DERIVAR', 'REGISTRAR_DATOS', 'ESCALAR']),
-    handoffTarget: z.enum(['ventas', 'info', 'pagos', 'humano']).nullable(),
-    escalation: z.enum(ESCALATIONS).nullable(),
-    replyNull: z.boolean(),
-    mustMatch: regexList,
-    mustNotMatch: regexList,
-  }),
-});
+// Esquema compartido con el futuro runner. Aquí solo se validan los datos.
 
 const read = (path) => readFileSync(path, 'utf8');
 const loadCases = (name) => JSON.parse(read(join(CASES_DIR, `${name}.json`)));
@@ -177,17 +149,18 @@ describe('agente recepcion: solo responde saludos y emergencias', () => {
     expect(cases.some((item) => item.expect.replyNull === false)).toBe(true);
   });
 
-  it('todos los demás casos responden null, salvo la emergencia', () => {
+  it('las derivaciones y escalamientos responden null; emergencia usa el aviso del sistema', () => {
     for (const item of cases) {
       if (item.expect.escalation === 'EMERGENCIA') {
-        expect(item.expect.replyNull, item.id).toBe(false);
+        expect(item.expect.replyNull, item.id).toBe(true);
+        expect(item.expect.noticeKind, item.id).toBe('EMERGENCIA');
       } else if (item.expect.action === 'DERIVAR' || item.expect.action === 'ESCALAR') {
         expect(item.expect.replyNull, item.id).toBe(true);
       }
     }
-    // Con respuesta: solo saludo, saludo con nombre y emergencia.
+    // Con respuesta del agente: solo saludos. El aviso del 911 es del sistema.
     const withReply = cases.filter((item) => !item.expect.replyNull);
-    expect(withReply.map((item) => item.id).sort()).toEqual(['emergencia-medica', 'saludo-con-nombre', 'saludo-simple']);
+    expect(withReply.map((item) => item.id).sort()).toEqual(['saludo-con-nombre', 'saludo-simple']);
   });
 
   it('REGISTRAR_DATOS solo va con saludo, así que siempre lleva respuesta', () => {
@@ -231,11 +204,34 @@ describe('agente ventas', () => {
 
 // Las regex viven en archivos JSON, donde un escape mal puesto (`\b`, `d+`) cambia el significado sin avisar.
 describe('regex de los casos de conversación', () => {
-  const allRegexes = ['recepcion', 'ventas'].flatMap((name) =>
+  const allRegexes = ['recepcion', 'ventas', 'integracion'].flatMap((name) =>
     loadCases(name).flatMap((item) =>
-      [...item.expect.mustMatch, ...item.expect.mustNotMatch].map((source) => ({ id: `${name}/${item.id}`, source })),
+      [...item.expect.mustMatch, ...item.expect.mustNotMatch, ...(item.expect.noticeMustMatch ?? [])]
+        .map((source) => ({ id: `${name}/${item.id}`, source })),
     ),
   );
+
+  it('valida integracion.json, sus cuatro ids y claves únicas de los tres archivos', () => {
+    const cases = loadCases('integracion');
+    expect(parseConversationCases(cases, { integration: true })).toHaveLength(4);
+    expect(cases.map((item) => item.id).sort()).toEqual([
+      'precios-traspaso-a-ventas', 'pide-persona-escala-sin-traspaso',
+      'ya-pague-destino-pagos-inexistente', 'pregunta-de-horarios-destino-info-inexistente',
+    ].sort());
+    const keys = ['recepcion', 'ventas', 'integracion'].flatMap((name) =>
+      parseConversationCases(loadCases(name)).map((item) => `${name}/${item.id}`));
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const item of cases) for (const message of item.messages) expect(message.content).not.toMatch(PESOS);
+  });
+
+  it('las expectativas del aviso de emergencia casan con el texto fijo', () => {
+    for (const name of ['recepcion', 'ventas']) {
+      const emergency = loadCases(name).find((item) => item.expect.escalation === 'EMERGENCIA');
+      expect(emergency.expect.mustMatch).toEqual([]);
+      expect(emergency.expect.noticeMustMatch.length).toBeGreaterThan(0);
+      for (const source of emergency.expect.noticeMustMatch) expect(EMERGENCY_NOTICE).toMatch(new RegExp(source, 'i'));
+    }
+  });
 
   it('ninguna contiene caracteres de control (señal de un escape mal escrito en el JSON)', () => {
     for (const { id, source } of allRegexes) {

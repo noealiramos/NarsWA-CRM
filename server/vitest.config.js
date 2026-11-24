@@ -11,6 +11,8 @@ export default defineConfig({
       // Una llamada real al LLM por descuido falla con CONFIG en vez de invocar un modelo (ADR-004).
       LLM_ENGINE: 'cli',
       CLAUDE_CLI_PATH: 'claude-no-disponible-en-pruebas',
+      // Explícito para que un cambio futuro del valor por defecto no altere las pruebas (ADR-005 §1).
+      AGENT_RUNTIME: 'SIMULADO',
     },
     // Comparten una base de datos: los archivos se ejecutan en serie.
     fileParallelism: false,

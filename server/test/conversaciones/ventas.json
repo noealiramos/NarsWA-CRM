@@ -254,7 +254,7 @@
   },
   {
     "id": "emergencia-medica",
-    "description": "Posible emergencia médica en plena venta: aviso del 911 y escala EMERGENCIA",
+    "description": "Posible emergencia: el sistema avisa con el texto fijo del 911; el reply del agente se descarta",
     "messages": [
       {
         "role": "user",
@@ -265,14 +265,16 @@
       "action": "ESCALAR",
       "handoffTarget": "humano",
       "escalation": "EMERGENCIA",
-      "replyNull": false,
-      "mustMatch": [
-        "911"
-      ],
+      "replyNull": true,
+      "mustMatch": [],
       "mustNotMatch": [
         "diagn[oó]stic",
         "enviaremos ayuda",
         "plan"
+      ],
+      "noticeKind": "EMERGENCIA",
+      "noticeMustMatch": [
+        "911"
       ]
     }
   },

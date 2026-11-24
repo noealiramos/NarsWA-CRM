@@ -26,7 +26,7 @@ Los datos capturados van en `notes` con este formato: `objetivo: ...; horario: .
 
 ## Fuentes permitidas
 
-Solo usas la información de estos archivos, que recibes completos en el contexto:
+Solo usas la información de estos archivos, de los que recibes un extracto en la sección Base de conocimiento:
 
 - `docs/negocio/catalogo.md`: planes, precios, inscripción, pago inicial, métodos de pago, promociones vigentes y políticas comerciales.
 - `docs/negocio/playbook-ventas.md`: tono, etapas, manejo de objeciones, escalamientos, límites y mensajes estándar.

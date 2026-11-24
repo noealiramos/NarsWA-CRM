@@ -1,0 +1,46 @@
+[
+  {
+    "id": "precios-traspaso-a-ventas",
+    "description": "Recepción deriva a Ventas en el mismo turno y el especialista responde; no acredita envío ni aprobación",
+    "messages": [{ "role": "user", "content": "Hola, ¿cuánto cuesta la mensualidad?" }],
+    "expect": {
+      "mode": "INTEGRACION", "action": "NINGUNA", "finalAgent": "ventas",
+      "trail": ["recepcion", "ventas"], "handoffTarget": null, "escalation": null,
+      "replyNull": false, "mustMatch": ["Mensual|Trimestral|Semestral|Estudiante|Pase diario"],
+      "mustNotMatch": []
+    }
+  },
+  {
+    "id": "pide-persona-escala-sin-traspaso",
+    "description": "La solicitud de una persona crea una decisión de escalamiento sin derivación al especialista",
+    "messages": [{ "role": "user", "content": "Quiero hablar con una persona, por favor" }],
+    "expect": {
+      "mode": "INTEGRACION", "action": "ESCALAR", "finalAgent": "recepcion",
+      "trail": ["recepcion"], "handoffTarget": "humano", "escalation": "SOLICITUD_HUMANO",
+      "pausesAI": true, "noticeKind": "AVISO_FIJO", "replyNull": true,
+      "mustMatch": [], "mustNotMatch": []
+    }
+  },
+  {
+    "id": "ya-pague-destino-pagos-inexistente",
+    "description": "Pagos no implementado: el orquestador devuelve un resultado seguro, no confirma el pago",
+    "messages": [{ "role": "user", "content": "Ya pagué y quiero enviar mi comprobante" }],
+    "expect": {
+      "mode": "INTEGRACION", "action": null, "finalAgent": "pagos", "trail": ["recepcion"],
+      "handoffTarget": null, "escalation": "FUERA_DE_CONOCIMIENTO", "cause": "DESTINO_INEXISTENTE",
+      "pausesAI": true, "noticeKind": "AVISO_FIJO", "replyNull": true,
+      "mustMatch": [], "mustNotMatch": []
+    }
+  },
+  {
+    "id": "pregunta-de-horarios-destino-info-inexistente",
+    "description": "Info no implementado: el orquestador devuelve un resultado seguro sin inventar horarios",
+    "messages": [{ "role": "user", "content": "¿A qué hora abren y dónde están?" }],
+    "expect": {
+      "mode": "INTEGRACION", "action": null, "finalAgent": "info", "trail": ["recepcion"],
+      "handoffTarget": null, "escalation": "FUERA_DE_CONOCIMIENTO", "cause": "DESTINO_INEXISTENTE",
+      "pausesAI": true, "noticeKind": "AVISO_FIJO", "replyNull": true,
+      "mustMatch": [], "mustNotMatch": []
+    }
+  }
+]
